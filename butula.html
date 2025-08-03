@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Public Dashboard - BUTULA MKONONI</title>
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+<script>
+tailwind.config = {
+theme: {
+extend: {
+colors: {
+primary: '#16a34a',
+secondary: '#dc2626'
+},
+borderRadius: {
+'none': '0px',
+'sm': '4px',
+DEFAULT: '8px',
+'md': '12px',
+'lg': '16px',
+'xl': '20px',
+'2xl': '24px',
+'3xl': '32px',
+'full': '9999px',
+'button': '8px'
+}
+}
+}
+}
+</script>
+<style>
+:where([class^="ri-"])::before {
+content: "\f3c2";
+}
+</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<!-- Password Protection Overlay -->
+<div id="passwordOverlay" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
+<div class="max-w-md w-full mx-4">
+<div class="bg-white border border-gray-200 rounded-xl p-8 shadow-lg">
+<div class="text-center mb-8">
+<div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+<i class="ri-shield-check-line text-primary text-2xl"></i>
+</div>
+<h1 class="text-2xl font-bold text-gray-900 mb-2">Public Dashboard Access</h1>
+<p class="text-gray-600">Enter the access code to view constituency projects</p>
+</div>
+<form id="passwordForm" class="space-y-6">
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-2">Access Code</label>
+<input type="password" id="passwordInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Enter access code" required>
+</div>
+<div id="errorMessage" class="text-secondary text-sm hidden">Invalid access code. Please try again.</div>
+<button type="submit" class="w-full bg-primary text-white py-3 !rounded-button whitespace-nowrap font-medium hover:bg-green-600 transition-colors">
+Enter Dashboard
+</button>
+</form>
+<div class="mt-6 text-center text-xs text-gray-500">
+Attempts remaining: <span id="attemptsRemaining">3</span>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Main Dashboard Content -->
+<div id="dashboardContent" class="hidden">
+
+<!-- Navigation -->
+<nav class="bg-white border-b border-gray-200 sticky top-0 z-40">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex justify-between items-center h-16">
+<div class="flex items-center space-x-8">
+<div class="flex items-center space-x-2">
+<div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+<i class="ri-government-line text-white text-lg"></i>
+</div>
+<div class="flex items-center space-x-1">
+<span class="text-xl font-bold text-primary">PUBLIC</span>
+<span class="text-xl font-bold text-primary">DASHBOARD</span>
+</div>
+</div>
+</div>
+<div class="flex items-center space-x-4">
+<div class="relative">
+<input type="text" id="globalSearch" placeholder="Search projects..." class="w-80 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<i class="ri-search-line text-gray-400"></i>
+</div>
+</div>
+<a href="https://readdy.ai/home/1ff7e82a-bbca-4d9b-b6ee-d00df604d24d/6ae31c66-7dd5-48b1-a72a-4dae8afa69ad" data-readdy="true" class="bg-gray-100 text-gray-700 px-4 py-2 !rounded-button whitespace-nowrap hover:bg-gray-200 transition-colors">
+<i class="ri-arrow-left-line mr-2"></i>
+Back to Main Portal
+</a>
+<button id="logoutBtn" class="border border-secondary text-secondary px-4 py-2 !rounded-button whitespace-nowrap hover:bg-secondary hover:text-white transition-colors">
+<i class="ri-logout-box-line mr-2"></i>
+Logout
+</button>
+</div>
+</div>
+</div>
+</nav>
+
+<!-- Filter Section -->
+<div class="bg-white border-b border-gray-200">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+<div class="flex flex-wrap gap-4 items-center">
+<div class="relative">
+<select id="wardFilter" class="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:ring-primary focus:border-transparent text-sm">
+<option value="">All Wards</option>
+<option value="marachi-east">Marachi East</option>
+<option value="marachi-north">Marachi North</option>
+<option value="marachi-west">Marachi West</option>
+<option value="central-marachi">Central Marachi</option>
+<option value="kingandole">Kingandole</option>
+<option value="lugulu">Lugulu</option>
+</select>
+<div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+<i class="ri-arrow-down-s-line text-gray-400"></i>
+</div>
+</div>
+<div class="relative">
+<select id="sectorFilter" class="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:ring-primary focus:border-transparent text-sm">
+<option value="">All Sectors</option>
+<option value="education">Education</option>
+<option value="health">Health</option>
+<option value="infrastructure">Infrastructure</option>
+<option value="water">Water</option>
+<option value="agriculture">Agriculture</option>
+<option value="transport">Transport</option>
+<option value="technology">Technology</option>
+<option value="energy">Energy</option>
+</select>
+<div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+<i class="ri-arrow-down-s-line text-gray-400"></i>
+</div>
+</div>
+<div class="relative">
+<select id="statusFilter" class="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:ring-primary focus:border-transparent text-sm">
+<option value="">All Status</option>
+<option value="completed">Completed</option>
+<option value="ongoing">Ongoing</option>
+<option value="pending">Pending</option>
+</select>
+<div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+<i class="ri-arrow-down-s-line text-gray-400"></i>
+</div>
+</div>
+<button id="clearFilters" class="bg-gray-100 text-gray-700 px-4 py-2 !rounded-button whitespace-nowrap hover:bg-gray-200 transition-colors text-sm">
+<i class="ri-close-line mr-2"></i>
+Clear Filters
+</button>
+</div>
+</div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+<div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+<div class="flex items-center justify-between">
+<div>
+<p class="text-sm font-medium text-gray-600">Total Projects</p>
+<p class="text-3xl font-bold text-gray-900">247</p>
+</div>
+<div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+<i class="ri-building-line text-primary text-xl"></i>
+</div>
+</div>
+</div>
+<div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+<div class="flex items-center justify-between">
+<div>
+<p class="text-sm font-medium text-gray-600">Completed</p>
+<p class="text-3xl font-bold text-green-600">189</p>
+<p class="text-sm text-gray-500">76.5%</p>
+</div>
+<div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+<i class="ri-checkbox-circle-line text-green-600 text-xl"></i>
+</div>
+</div>
+</div>
+<div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+<div class="flex items-center justify-between">
+<div>
+<p class="text-sm font-medium text-gray-600">Ongoing</p>
+<p class="text-3xl font-bold text-yellow-600">42</p>
+<p class="text-sm text-gray-500">17.0%</p>
+</div>
+<div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+<i class="ri-time-line text-yellow-600 text-xl"></i>
+</div>
+</div>
+</div>
+<div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+<div class="flex items-center justify-between">
+<div>
+<p class="text-sm font-medium text-gray-600">Needs Attention</p>
+<p class="text-3xl font-bold text-secondary">16</p>
+<p class="text-sm text-gray-500">6.5%</p>
+</div>
+<div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+<i class="ri-alert-line text-secondary text-xl"></i>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Project Listing -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<div class="lg:col-span-2">
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-xl font-semibold text-gray-900">Project Listings</h2>
+<div class="text-sm text-gray-500">Showing <span id="projectCount">12</span> projects</div>
+</div>
+<div id="projectGrid" class="space-y-4">
+<!-- Project cards will be dynamically inserted here -->
+</div>
+</div>
+</div>
+
+<!-- Community Feedback Section -->
+<div class="lg:col-span-1">
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+<h3 class="text-lg font-semibold text-gray-900 mb-4">Submit Feedback</h3>
+<form id="feedbackForm" class="space-y-4">
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-2">Select Project</label>
+<div class="relative">
+<select id="projectSelect" class="appearance-none w-full bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 focus:ring-2 focus:ring-primary focus:border-transparent text-sm">
+<option value="">Choose a project...</option>
+<option value="marachi-east-school">Marachi East Primary School Renovation</option>
+<option value="water-borehole">Community Water Borehole Project</option>
+<option value="health-center">Lugulu Health Center Upgrade</option>
+<option value="road-construction">Kingandole-Butula Road Construction</option>
+</select>
+<div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+<i class="ri-arrow-down-s-line text-gray-400"></i>
+</div>
+</div>
+</div>
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-2">Feedback Type</label>
+<div class="space-y-2">
+<label class="flex items-center">
+<input type="radio" name="feedbackType" value="general" class="hidden">
+<div class="w-4 h-4 border-2 border-gray-300 rounded-full mr-2 flex items-center justify-center cursor-pointer">
+<div class="w-2 h-2 bg-primary rounded-full hidden"></div>
+</div>
+<span class="text-sm text-gray-700">General Feedback</span>
+</label>
+<label class="flex items-center">
+<input type="radio" name="feedbackType" value="problem" class="hidden">
+<div class="w-4 h-4 border-2 border-gray-300 rounded-full mr-2 flex items-center justify-center cursor-pointer">
+<div class="w-2 h-2 bg-primary rounded-full hidden"></div>
+</div>
+<span class="text-sm text-gray-700">Report Problem</span>
+</label>
+<label class="flex items-center">
+<input type="radio" name="feedbackType" value="suggestion" class="hidden">
+<div class="w-4 h-4 border-2 border-gray-300 rounded-full mr-2 flex items-center justify-center cursor-pointer">
+<div class="w-2 h-2 bg-primary rounded-full hidden"></div>
+</div>
+<span class="text-sm text-gray-700">Suggestion</span>
+</label>
+</div>
+</div>
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-2">Your Comments</label>
+<textarea id="feedbackText" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm" placeholder="Share your feedback or report an issue..."></textarea>
+</div>
+<label class="flex items-center">
+<input type="checkbox" id="anonymousSubmission" class="hidden">
+<div class="w-4 h-4 border-2 border-gray-300 rounded mr-2 flex items-center justify-center cursor-pointer">
+<i class="ri-check-line text-primary text-sm hidden"></i>
+</div>
+<span class="text-sm text-gray-700">Submit anonymously</span>
+</label>
+<button type="submit" class="w-full bg-primary text-white py-2 !rounded-button whitespace-nowrap font-medium hover:bg-green-600 transition-colors text-sm">
+<i class="ri-send-plane-line mr-2"></i>
+Submit Feedback
+</button>
+</form>
+</div>
+
+<!-- Recent Feedback -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+<h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Community Feedback</h3>
+<div class="space-y-4">
+<div class="border-l-4 border-primary pl-4 py-2">
+<div class="flex items-center justify-between mb-1">
+<span class="text-sm font-medium text-gray-900">General Feedback</span>
+<span class="text-xs text-gray-500">2 hours ago</span>
+</div>
+<p class="text-sm text-gray-600">Excellent progress on the water project. Community very satisfied with the quality of work.</p>
+<span class="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full mt-2">Acknowledged</span>
+</div>
+<div class="border-l-4 border-yellow-500 pl-4 py-2">
+<div class="flex items-center justify-between mb-1">
+<span class="text-sm font-medium text-gray-900">Report Problem</span>
+<span class="text-xs text-gray-500">1 day ago</span>
+</div>
+<p class="text-sm text-gray-600">Road construction materials blocking access to local market. Need alternative route.</p>
+<span class="inline-block px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full mt-2">Under Review</span>
+</div>
+<div class="border-l-4 border-blue-500 pl-4 py-2">
+<div class="flex items-center justify-between mb-1">
+<span class="text-sm font-medium text-gray-900">Suggestion</span>
+<span class="text-xs text-gray-500">3 days ago</span>
+</div>
+<p class="text-sm text-gray-600">Consider adding solar lighting to the new health center for 24/7 operations.</p>
+<span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full mt-2">Implemented</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+
+<script id="passwordProtection">
+document.addEventListener('DOMContentLoaded', function() {
+const passwordOverlay = document.getElementById('passwordOverlay');
+const dashboardContent = document.getElementById('dashboardContent');
+const passwordForm = document.getElementById('passwordForm');
+const passwordInput = document.getElementById('passwordInput');
+const errorMessage = document.getElementById('errorMessage');
+const attemptsElement = document.getElementById('attemptsRemaining');
+const logoutBtn = document.getElementById('logoutBtn');
+
+let attempts = 3;
+let sessionTimeout;
+const correctPassword = 'BTL01';
+
+function startSession() {
+passwordOverlay.classList.add('hidden');
+dashboardContent.classList.remove('hidden');
+resetSessionTimeout();
+}
+
+function endSession() {
+passwordOverlay.classList.remove('hidden');
+dashboardContent.classList.add('hidden');
+passwordInput.value = '';
+errorMessage.classList.add('hidden');
+attempts = 3;
+attemptsElement.textContent = attempts;
+clearTimeout(sessionTimeout);
+}
+
+function resetSessionTimeout() {
+clearTimeout(sessionTimeout);
+sessionTimeout = setTimeout(() => {
+alert('Session expired due to inactivity. Please log in again.');
+endSession();
+}, 30 * 60 * 1000);
+}
+
+passwordForm.addEventListener('submit', function(e) {
+e.preventDefault();
+const enteredPassword = passwordInput.value;
+
+if (enteredPassword === correctPassword) {
+startSession();
+} else {
+attempts--;
+attemptsElement.textContent = attempts;
+errorMessage.classList.remove('hidden');
+passwordInput.value = '';
+
+if (attempts <= 0) {
+passwordInput.disabled = true;
+passwordForm.querySelector('button').disabled = true;
+errorMessage.textContent = 'Too many failed attempts. Access temporarily locked.';
+setTimeout(() => {
+passwordInput.disabled = false;
+passwordForm.querySelector('button').disabled = false;
+attempts = 3;
+attemptsElement.textContent = attempts;
+errorMessage.textContent = 'Invalid access code. Please try again.';
+}, 5 * 60 * 1000);
+}
+}
+});
+
+logoutBtn.addEventListener('click', function() {
+endSession();
+});
+
+document.addEventListener('mousemove', resetSessionTimeout);
+document.addEventListener('keypress', resetSessionTimeout);
+});
+</script>
+
+<script id="projectListing">
+document.addEventListener('DOMContentLoaded', function() {
+const projects = [
+{
+id: 1,
+title: 'Marachi East Primary School Renovation',
+ward: 'marachi-east',
+sector: 'education',
+status: 'ongoing',
+progress: 75,
+startDate: '2024-01-15',
+endDate: '2025-03-30',
+description: 'Complete renovation of classrooms, library, and playground facilities to improve learning environment for 450 students.',
+image: 'https://readdy.ai/api/search-image?query=Modern%20African%20primary%20school%20renovation%20with%20new%20classrooms%2C%20children%20learning%2C%20bright%20educational%20environment%2C%20Kenya%20school%20setting%2C%20construction%20progress%2C%20educational%20infrastructure%20development%2C%20clean%20modern%20design&width=400&height=200&seq=proj001&orientation=landscape'
+},
+{
+id: 2,
+title: 'Community Water Borehole Project',
+ward: 'central-marachi',
+sector: 'water',
+status: 'completed',
+progress: 100,
+startDate: '2023-06-01',
+endDate: '2024-01-15',
+description: 'Installation of solar-powered water borehole serving 2,500 community members with clean drinking water access.',
+image: 'https://readdy.ai/api/search-image?query=African%20community%20water%20borehole%20project%20with%20solar%20panels%2C%20clean%20water%20access%2C%20rural%20Kenya%20setting%2C%20community%20members%20collecting%20water%2C%20infrastructure%20development%2C%20sustainable%20water%20solution&width=400&height=200&seq=proj002&orientation=landscape'
+},
+{
+id: 3,
+title: 'Lugulu Health Center Upgrade',
+ward: 'lugulu',
+sector: 'health',
+status: 'ongoing',
+progress: 60,
+startDate: '2024-02-01',
+endDate: '2025-06-30',
+description: 'Expansion of health center with new maternity ward, laboratory, and modern medical equipment installation.',
+image: 'https://readdy.ai/api/search-image?query=Modern%20African%20health%20center%20construction%20with%20medical%20facilities%2C%20healthcare%20infrastructure%2C%20Kenya%20hospital%20upgrade%2C%20construction%20progress%2C%20medical%20equipment%2C%20healthcare%20development&width=400&height=200&seq=proj003&orientation=landscape'
+},
+{
+id: 4,
+title: 'Kingandole-Butula Road Construction',
+ward: 'kingandole',
+sector: 'transport',
+status: 'ongoing',
+progress: 45,
+startDate: '2024-03-15',
+endDate: '2025-12-31',
+description: '15km tarmac road construction connecting Kingandole to main Butula township, improving market access.',
+image: 'https://readdy.ai/api/search-image?query=African%20road%20construction%20project%20with%20tarmac%20laying%2C%20rural%20Kenya%20landscape%2C%20infrastructure%20development%2C%20construction%20machinery%2C%20transportation%20improvement%2C%20community%20connectivity&width=400&height=200&seq=proj004&orientation=landscape'
+},
+{
+id: 5,
+title: 'Marachi North Agricultural Center',
+ward: 'marachi-north',
+sector: 'agriculture',
+status: 'completed',
+progress: 100,
+startDate: '2023-04-01',
+endDate: '2024-02-28',
+description: 'Modern agricultural training center with demonstration farms and storage facilities for local farmers.',
+image: 'https://readdy.ai/api/search-image?query=Modern%20African%20agricultural%20training%20center%20with%20demonstration%20farms%2C%20storage%20facilities%2C%20farmers%20training%2C%20Kenya%20agriculture%2C%20rural%20development%2C%20farming%20infrastructure&width=400&height=200&seq=proj005&orientation=landscape'
+},
+{
+id: 6,
+title: 'Marachi West Solar Power Grid',
+ward: 'marachi-west',
+sector: 'energy',
+status: 'pending',
+progress: 15,
+startDate: '2024-05-01',
+endDate: '2026-04-30',
+description: 'Installation of solar power grid system to provide reliable electricity to 800 households in rural areas.',
+image: 'https://readdy.ai/api/search-image?query=Solar%20power%20grid%20installation%20in%20rural%20Africa%2C%20solar%20panels%20array%2C%20Kenya%20renewable%20energy%2C%20electrical%20infrastructure%2C%20sustainable%20power%20development%2C%20community%20electrification&width=400&height=200&seq=proj006&orientation=landscape'
+}
+];
+
+const projectGrid = document.getElementById('projectGrid');
+const projectCount = document.getElementById('projectCount');
+const wardFilter = document.getElementById('wardFilter');
+const sectorFilter = document.getElementById('sectorFilter');
+const statusFilter = document.getElementById('statusFilter');
+const clearFilters = document.getElementById('clearFilters');
+const globalSearch = document.getElementById('globalSearch');
+
+function getStatusColor(status) {
+switch(status) {
+case 'completed': return 'bg-green-100 text-green-800';
+case 'ongoing': return 'bg-yellow-100 text-yellow-800';
+case 'pending': return 'bg-red-100 text-red-800';
+default: return 'bg-gray-100 text-gray-800';
+}
+}
+
+function getSectorIcon(sector) {
+const icons = {
+education: 'ri-school-line',
+health: 'ri-heart-pulse-line',
+infrastructure: 'ri-building-2-line',
+water: 'ri-drop-line',
+agriculture: 'ri-plant-line',
+transport: 'ri-truck-line',
+technology: 'ri-computer-line',
+energy: 'ri-flashlight-line'
+};
+return icons[sector] || 'ri-building-line';
+}
+
+function renderProjects(filteredProjects) {
+projectGrid.innerHTML = '';
+projectCount.textContent = filteredProjects.length;
+
+filteredProjects.forEach(project => {
+const projectCard = document.createElement('div');
+projectCard.className = 'border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow';
+projectCard.innerHTML = `
+<div class="flex items-start space-x-4">
+<img src="${project.image}" alt="${project.title}" class="w-20 h-20 rounded-lg object-cover object-top flex-shrink-0">
+<div class="flex-1 min-w-0">
+<div class="flex items-start justify-between mb-2">
+<h3 class="font-semibold text-gray-900 text-sm leading-tight">${project.title}</h3>
+<span class="inline-block px-2 py-1 text-xs rounded-full ${getStatusColor(project.status)} ml-2 whitespace-nowrap">
+${project.status.charAt(0).toUpperCase() + project.status.slice(1)}
+</span>
+</div>
+<div class="flex items-center text-xs text-gray-500 mb-2">
+<div class="w-4 h-4 flex items-center justify-center mr-1">
+<i class="ri-map-pin-line"></i>
+</div>
+<span class="mr-4">${project.ward.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+<div class="w-4 h-4 flex items-center justify-center mr-1">
+<i class="${getSectorIcon(project.sector)}"></i>
+</div>
+<span>${project.sector.charAt(0).toUpperCase() + project.sector.slice(1)}</span>
+</div>
+<p class="text-xs text-gray-600 mb-3 line-clamp-2">${project.description}</p>
+<div class="mb-3">
+<div class="flex items-center justify-between text-xs text-gray-600 mb-1">
+<span>Progress</span>
+<span>${project.progress}%</span>
+</div>
+<div class="w-full bg-gray-200 rounded-full h-2">
+<div class="bg-primary h-2 rounded-full transition-all duration-300" style="width: ${project.progress}%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-xs text-gray-500">
+<span>Start: ${new Date(project.startDate).toLocaleDateString()}</span>
+<span>End: ${new Date(project.endDate).toLocaleDateString()}</span>
+</div>
+</div>
+</div>
+`;
+projectGrid.appendChild(projectCard);
+});
+}
+
+function filterProjects() {
+const wardValue = wardFilter.value;
+const sectorValue = sectorFilter.value;
+const statusValue = statusFilter.value;
+const searchValue = globalSearch.value.toLowerCase();
+
+const filtered = projects.filter(project => {
+const matchesWard = !wardValue || project.ward === wardValue;
+const matchesSector = !sectorValue || project.sector === sectorValue;
+const matchesStatus = !statusValue || project.status === statusValue;
+const matchesSearch = !searchValue || 
+project.title.toLowerCase().includes(searchValue) ||
+project.description.toLowerCase().includes(searchValue);
+
+return matchesWard && matchesSector && matchesStatus && matchesSearch;
+});
+
+renderProjects(filtered);
+}
+
+wardFilter.addEventListener('change', filterProjects);
+sectorFilter.addEventListener('change', filterProjects);
+statusFilter.addEventListener('change', filterProjects);
+globalSearch.addEventListener('input', filterProjects);
+
+clearFilters.addEventListener('click', function() {
+wardFilter.value = '';
+sectorFilter.value = '';
+statusFilter.value = '';
+globalSearch.value = '';
+filterProjects();
+});
+
+renderProjects(projects);
+});
+</script>
+
+<script id="feedbackSystem">
+document.addEventListener('DOMContentLoaded', function() {
+const feedbackForm = document.getElementById('feedbackForm');
+const radioButtons = document.querySelectorAll('input[type="radio"][name="feedbackType"]');
+const anonymousCheckbox = document.getElementById('anonymousSubmission');
+
+radioButtons.forEach(radio => {
+const container = radio.parentElement;
+const indicator = container.querySelector('div div');
+
+container.addEventListener('click', function() {
+radioButtons.forEach(r => {
+const otherIndicator = r.parentElement.querySelector('div div');
+otherIndicator.classList.add('hidden');
+r.checked = false;
+});
+
+indicator.classList.remove('hidden');
+radio.checked = true;
+});
+});
+
+const checkboxContainer = anonymousCheckbox.parentElement;
+const checkboxIndicator = checkboxContainer.querySelector('i');
+
+checkboxContainer.addEventListener('click', function() {
+anonymousCheckbox.checked = !anonymousCheckbox.checked;
+if (anonymousCheckbox.checked) {
+checkboxIndicator.classList.remove('hidden');
+} else {
+checkboxIndicator.classList.add('hidden');
+}
+});
+
+feedbackForm.addEventListener('submit', function(e) {
+e.preventDefault();
+
+const projectSelect = document.getElementById('projectSelect');
+const feedbackText = document.getElementById('feedbackText');
+const selectedType = document.querySelector('input[name="feedbackType"]:checked');
+const isAnonymous = anonymousCheckbox.checked;
+
+if (!projectSelect.value || !selectedType || !feedbackText.value.trim()) {
+alert('Please fill in all required fields.');
+return;
+}
+
+const feedbackData = {
+project: projectSelect.value,
+type: selectedType.value,
+message: feedbackText.value.trim(),
+anonymous: isAnonymous,
+timestamp: new Date().toISOString()
+};
+
+alert('Thank you for your feedback! Your submission has been recorded and will be reviewed by the relevant authorities.');
+
+feedbackForm.reset();
+radioButtons.forEach(radio => {
+const indicator = radio.parentElement.querySelector('div div');
+indicator.classList.add('hidden');
+});
+checkboxIndicator.classList.add('hidden');
+});
+});
+</script>
+
+</body>
+</html>
